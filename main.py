@@ -17,13 +17,22 @@ def load_high_score():
     """HIGHSCORE_FILE 에서 최고 점수를 읽어 돌려준다."""
     # TODO(F5): 파일에서 최고 점수를 읽어 int 로 반환할 것.
     #           파일이 없거나 내용이 숫자가 아니면 0 을 반환할 것.
-    return 0
+    try:
+        # 최고 점수가 저장된 파일을 읽기 모드로 열기
+        with open(HIGHSCORE_FILE, "r", encoding="utf-8") as file:
+            # 파일에 저장된 점수를 정수로 변환하여 반환
+            return max(0, int(file.read().strip()))
+    except (FileNotFoundError, ValueError):
+        # 파일이 없거나 저장된 값이 숫자가 아니면 0점 반환
+        return 0
 
 
 def save_high_score(score):
     """최고 점수를 HIGHSCORE_FILE 에 저장한다."""
     # TODO(F5): score 를 파일에 저장할 것. (다음 실행 때 load_high_score() 로 읽을 수 있게)
-    pass
+    with open(HIGHSCORE_FILE, "w", encoding="utf-8") as file:
+        # 최고 점수를 문자열로 변환하여 파일에 저장
+        file.write(str(score))
 
 
 class Game:
@@ -78,6 +87,8 @@ class Game:
                   self.bullets.add(bullet)
                   self.all_sprites.add(bullet)
                 # TODO(F5): 게임 오버 상태에서 R 키를 누르면 self.reset() 으로 새 판을 시작할 것.
+                if event.key == pygame.K_r and self.game_over:
+                    self.reset()  # 게임 오버 상태에서 R키를 누르면 새 게임 시작
 
     def handle_title_event(self, event):
         """시작 화면의 입력: SPACE 면 새 판 시작, ESC 면 종료. (적 생성·발사 없음)"""
@@ -132,6 +143,15 @@ class Game:
         self.game_over = True
         # TODO(F5): 이번 점수가 최고 점수보다 높으면 self.high_score 를 바꾸고 save_high_score() 로 저장할 것.
 
+        # 파일에 저장된 기존 최고 점수를 불러오기
+        previous_high_score = load_high_score()
+
+        # 현재 점수가 최고 점수보다 높으면 새로운 기록 저장
+        if self.score > previous_high_score:
+            self.high_score = self.score  # 현재 점수를 새로운 최고 점수로 갱신
+            save_high_score(self.high_score)  # 갱신된 최고 점수를 파일에 저장
+        else:
+            self.high_score = previous_high_score  # 기존 최고 점수 유지
     # ---------------- 그리기 ----------------
     def draw_text(self, text, font, color, **position):
         """글자를 화면에 그린다. 예: self.draw_text("Hi", self.font, WHITE, center=(240, 320))"""
@@ -179,6 +199,20 @@ class Game:
 
         # 게임 종료 시 최종 점수를 화면 중앙에 표시
         self.draw_text(f"FINAL SCORE: {self.score}", self.font, WHITE, center=(cx, HEIGHT // 2 + 10))
+
+        # 저장된 최고 점수를 불러와 게임 오버 화면에 표시
+        self.draw_text(
+            f"HIGH SCORE: {load_high_score()}",
+            self.font, YELLOW,
+            center=(cx, HEIGHT // 2 + 50)
+        )   
+
+        # 게임을 다시 시작할 수 있도록 R키 안내 문구 표시
+        self.draw_text(
+            "Press R to restart",
+            self.font, WHITE,
+            center=(cx, HEIGHT // 2 + 110)
+        )
 
     # ---------------- 게임 루프 ----------------
     def step(self):
