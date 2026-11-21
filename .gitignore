@@ -6,3 +6,6 @@ __pycache__/
 .venv/
 venv/
 env/
+
+# 게임 실행 중 자동 생성되는 최고 점수 저장 파일 제외
+highscore.txt
